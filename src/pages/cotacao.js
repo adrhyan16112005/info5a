@@ -1,27 +1,133 @@
-import useSWR from 'swr';
-import { fetcher } from '../lib/fetcher';
+import React, { useState } from 'react';
 
-export default function Home() {
-  const { data, error, isLoading } = useSWR(
-    'https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL?token=927c456f9a4bec44887e5cc0e2d154c8f843f33855ec2ec0d15db596ee7d19cd',
-    fetcher,
-    { refreshInterval: 5000 } // Atualiza a cada 60s //1000 == 1 segundo refresh page
-  );
+export default function Cotacao() {
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [data, setData] = useState([]);
 
-  if (error) return <div>Erro ao carregar dados.</div>;
-  if (isLoading || !data) return <div>Carregando...</div>;
+  // Função para formatar as datas no padrão YYYYMMDD para a API
+  const formatDate = (date) => {
+    const d = new Date(date);
+    const month = '' + (d.getMonth() + 1);
+    const day = '' + d.getDate();
+    const year = d.getFullYear();
 
-  const usdbrl = data.USDBRL;
+    return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!startDate || !endDate) {
+      setError('Por favor, informe as duas datas.');
+      return;
+    }
+
+    const startFormatted = formatDate(startDate);
+    const endFormatted = formatDate(endDate);
+
+    if (startFormatted > endFormatted) {
+      setError('A data inicial deve ser menor ou igual à data final.');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+    setData([]);
+
+    try {
+      const url = `https://economia.awesomeapi.com.br/json/daily/USD-BRL/365?start_date=${startFormatted}&end_date=${endFormatted}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar os dados da cotação.');
+      }
+
+      const jsonData = await response.json();
+      setData(jsonData);
+    } catch (err) {
+      setError(err.message || 'Erro desconhecido.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <main style={{ padding: '2rem', fontFamily: 'Arial' }}>
-      <h1>Cotação Dólar Hoje (USD/BRL)</h1>
-      <p><strong>Compra:</strong> R$ {usdbrl.bid}</p>
-      <p><strong>Venda:</strong> R$ {usdbrl.ask}</p>
-      <p><strong>Alta:</strong> R$ {usdbrl.high}</p>
-      <p><strong>Baixa:</strong> R$ {usdbrl.low}</p>
-      <p><strong>Variação:</strong> {usdbrl.varBid} ({usdbrl.pctChange}%)</p>
-      <small>Atualizado: {new Date(Number(usdbrl.timestamp) * 1000).toLocaleString()}</small>
-    </main>
+    <div style={{ maxWidth: 700, margin: '2rem auto', fontFamily: 'Arial, sans-serif', padding: '0 1rem' }}>
+      <h1 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Buscar Cotação USD/BRL</h1>
+      <form onSubmit={handleSubmit} style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <label>
+          Data Início:
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+            style={{ marginLeft: '0.5rem', padding: '0.3rem' }}
+          />
+        </label>
+        <label>
+          Data Fim:
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            required
+            style={{ marginLeft: '0.5rem', padding: '0.3rem' }}
+          />
+        </label>
+        <button
+          type="submit"
+          style={{
+            padding: '0.5rem',
+            backgroundColor: '#0070f3',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '4px',
+            fontWeight: 'bold',
+          }}
+        >
+          Buscar
+        </button>
+      </form>
+
+      {loading && <p>Carregando dados...</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {!loading && !error && data.length > 0 && (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#0070f3', color: 'white' }}>
+              <th style={{ padding: '0.5rem', border: '1px solid #ddd' }}>Data</th>
+              <th style={{ padding: '0.5rem', border: '1px solid #ddd' }}>Valor Compra</th>
+              <th style={{ padding: '0.5rem', border: '1px solid #ddd' }}>Valor Venda</th>
+              <th style={{ padding: '0.5rem', border: '1px solid #ddd' }}>Máxima</th>
+              <th style={{ padding: '0.5rem', border: '1px solid #ddd' }}>Mínima</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item) => {
+              const date = new Date(parseInt(item.timestamp) * 1000);
+              const formattedDate = date.toLocaleDateString();
+
+              return (
+                <tr key={item.timestamp} style={{ borderBottom: '1px solid #ddd' }}>
+                  <td style={{ padding: '0.5rem', textAlign: 'center' }}>{formattedDate}</td>
+                  <td style={{ padding: '0.5rem', textAlign: 'right' }}>R$ {parseFloat(item.bid).toFixed(4)}</td>
+                  <td style={{ padding: '0.5rem', textAlign: 'right' }}>R$ {parseFloat(item.ask).toFixed(4)}</td>
+                  <td style={{ padding: '0.5rem', textAlign: 'right' }}>R$ {parseFloat(item.high).toFixed(4)}</td>
+                  <td style={{ padding: '0.5rem', textAlign: 'right' }}>R$ {parseFloat(item.low).toFixed(4)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      {!loading && !error && data.length === 0 && <p>Não há dados para exibir.</p>}
+    </div>
   );
 }
+
