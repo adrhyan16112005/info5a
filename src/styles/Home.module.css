@@ -7,35 +7,35 @@
   padding: 3rem 1rem;
   max-width: 1200px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #3ddc97, #00c2ff);
+  background-color: var(--background);
+  color: var(--foreground);
   min-height: 100vh;
-  color: #ffffff;
-  text-align: center;
-  border-radius: 20px;
+  border-radius: 16px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .title {
   font-size: 3rem;
   font-weight: bold;
   margin-bottom: 1rem;
-  background: linear-gradient(90deg, #ffffff, #d2fff4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--foreground);
+  text-shadow: 0 0 10px rgba(0, 255, 200, 0.4);
 }
 
 .subtitle {
   font-size: 1.3rem;
   margin-bottom: 2rem;
   max-width: 700px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--foreground);
+  opacity: 0.85;
 }
 
 .button {
   padding: 0.9rem 2rem;
   font-size: 1rem;
   font-weight: 600;
-  color: #00c2ff;
-  background-color: #ffffff;
+  color: var(--background);
+  background-color: var(--foreground);
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -44,8 +44,8 @@
 }
 
 .button:hover {
-  background-color: #d2fff4;
-  color: #006060;
+  background-color: #3ddc97;
+  color: #ffffff;
   transform: scale(1.05);
 }
 
@@ -58,13 +58,17 @@
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.95);
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #1e1e1e;
   padding: 2rem;
   border-radius: 16px;
-  text-align: left;
-  color: #1e1e1e;
   transition: all 0.3s ease;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.dark .card {
+  background-color: rgba(30, 30, 30, 0.95);
+  color: #f0f0f0;
 }
 
 .card:hover {
@@ -76,11 +80,12 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
-  color: #00c2ff;
+  color: var(--foreground);
 }
 
 .cardDescription {
   font-size: 1rem;
-  color: #444;
+  color: var(--foreground);
+  opacity: 0.8;
   line-height: 1.6;
 }
